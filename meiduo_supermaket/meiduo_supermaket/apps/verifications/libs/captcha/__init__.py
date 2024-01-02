@@ -1,0 +1,2 @@
+def captcha():
+    return None

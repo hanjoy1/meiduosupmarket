@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "users.apps.UsersConfig",  # 用户模块
     "contents.apps.ContentsConfig",  # 首页模块
+    "verifications.apps.VerificationsConfig",  # 验证模块
 ]
 
 MIDDLEWARE = [

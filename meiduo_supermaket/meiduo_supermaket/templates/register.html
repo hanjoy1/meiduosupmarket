@@ -37,7 +37,7 @@
 						</li>
 						<li>
 							<label>确认密码:</label>
-							<input type="password" v_model="passwoed_re" @blur="check_password_re" name="password2" id="cpwd">
+							<input type="password" v-model="passwoed_re" @blur="check_password_re" name="password2" id="cpwd">
 							<span class="error_tip" v-show="error_passwoed_re">两次输入的密码不一致</span>
 						</li>
 						<li>
@@ -48,7 +48,7 @@
 						<li>
 							<label>图形验证码:</label>
 							<input type="text" name="image_code" id="pic_code" class="msg_input">
-							<img src="../static/images/pic_code.jpg" alt="图形验证码" class="pic_code">
+							<img :src="image_code_url" @click="generate_image_code" alt="图形验证码" class="pic_code">
 							<span class="error_tip">请填写图形验证码</span>
 						</li>
 						<li>
@@ -88,5 +88,6 @@
 	</div>
 		</div>
 </body>
-	<script type="text/javascript" src="{{ static('js/register.js') }}"></script>
+		<script type="text/javascript" src="{{ static('js/common.js') }}"></script>
+		<script type="text/javascript" src="{{ static('js/register.js') }}"></script>
 </html>

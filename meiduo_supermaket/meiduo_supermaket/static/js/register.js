@@ -4,12 +4,15 @@ let vm = new Vue({
     // 修改Vue变量的读取语法，避免和django模板语法冲突
     delimiters: ['[[', ']]'],
     // 数据对象
-    data:{
+    data(){
         //v-model
+        return{
         username: '',
         password: '',
         password_re: '',
         mobile: '',
+        allow: '',
+        image_code_url: '00',
         //v-shou
         error_name: false,
         error_password: false,
@@ -19,9 +22,22 @@ let vm = new Vue({
         //error_message
         error_name_message: '1111111111',
         error_mobile_message: '',
+        }
+    },
+    mounted(){ // 页面加载完会被调用
+        // 生成图形验证码
+        this.generate_image_code();
+
     },
     methods:{ //定义和实现方法
-// 检查用户名
+        // 生成图形验证码: 封装的思想，方便代码复用
+        generate_image_code(){
+            this.uuid = generateUUID();
+            this.image_code_url = '/image_codes/' + this.uuid + '/';
+            console.log(this.image_code_url);
+            //this.image_code_url = '/image_codes/' + this.uuid + '/';
+        },
+        // 检查用户名
         check_username(){
         // 用户名是否重复
             if (this.error_name == false) {
@@ -35,7 +51,7 @@ let vm = new Vue({
                             this.error_name_message = '用户名已存在';
                             this.error_name = true;
                         } else {
-                            this.error_name = true;
+                            this.error_name = false;
                         }
                     })
                     .catch(error => {
