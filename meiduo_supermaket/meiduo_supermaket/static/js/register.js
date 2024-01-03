@@ -12,13 +12,16 @@ let vm = new Vue({
         password_re: '',
         mobile: '',
         allow: '',
-        image_code_url: '00',
+        image_code_url: '',
+        image_code: '',
+        error_image_code_message: '',
         //v-shou
         error_name: false,
         error_password: false,
         error_password_re: false,
         error_mobile: false,
         error_allow: false,
+        error_image_code: false,
         //error_message
         error_name_message: '1111111111',
         error_mobile_message: '',
@@ -60,12 +63,30 @@ let vm = new Vue({
             }
 
         },
+        // 校验图形验证码
+        check_image_code(){
+            if (this.image_code.length != 4)
+            {
+                this.error_image_code_message = '请输入图形验证码';
+                this.error_image_code = true;
+            }
+            else
+            {
+                this.error_image_code = false;
+            }
+        },
+        // 检查手机号
+        check_mobile(){
+        },
+
         // 检查密码
         check_password(){
         },
         // 确认密码
         check_password_re(){
         },
+        // 用户允许
+        check_error_allow(){},
         // 监听表单提交，校验用户输入的数据
         on_submit(){
             this.check_username();
