@@ -6,9 +6,9 @@ import re
 from users.models import User
 from django.db import DatabaseError
 from django.urls import reverse
-from django.contrib.auth import login
+from django.contrib.auth import login, authenticate, logout
 from meiduo_supermaket.utils.response_code import RETCODE
-
+from django.contrib.auth.mixins import LoginRequiredMixin
 # Create your views here.
 
 
@@ -54,10 +54,12 @@ class RegisterView(View):
             return render(request, 'register.html', {'register_errmsg': '注册失败'})
         # 实现状态保持
         login(request, user)
-
         # 响应结果
         # 重定向
-        return redirect(reverse('contents:index'))
+        response = redirect(reverse('contents:index'))
+        response.set_cookie('username', user.username, max_age=3600 * 24 * 14)
+        # 响应结果
+        return response
 
 
 class UsernameCountview(View):
@@ -72,3 +74,66 @@ class UsernameCountview(View):
         count = User.objects.filter(username=username).count()
         # 响应结果
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'ok', 'count': count})
+
+class LoginView(View):
+    def post(self, request):
+        # 接受参数
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        remembered = request.POST.get('remembered')
+        # 校验参数
+        if not all([username, password]):
+            return http.HttpResponseForbidden('缺少必传参数')
+        if not re.match(r'^[a-zA-Z0-9_-]{5,20}$', username):
+            return http.HttpResponseForbidden('请输入正确的用户名')
+        if not re.match(r'^[0-9A-Za-z]{8,20}$', password):
+            return http.HttpResponseForbidden('密码最少为8位，最长为20位')
+        # 认证用户： 使用账号查询用户是否存在， 如果用户存在 再校验密码是否正确
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return render(request, 'login.html', {'account_errmsg':'账号或者密码错误'})
+        # 状态保持
+        login(request, user)
+        # 使用remembered确定状态保持周期长短
+        if remembered != 'on':
+            # 没有记住的话， 状态保持在会话结束后就销毁
+            request.session.set_expiry(0)
+        else:
+            # 记住登录： 状态保持一定时间 两周 默认是两周
+            request.session.set_expiry(None)
+        #为了实现右上角展示用户的信息, 我们需要将用户名缓存到cookie中
+        # response.set_cookie('key', 'val', 'expiry')
+        next = request.GET.get('next')
+        if next:
+            response = redirect(next)
+        else:
+            response = redirect(reverse('contents:index'))
+        response.set_cookie('username', user.username, max_age=3600 * 24 * 14)
+        # 响应结果
+        return response
+
+    def get(self, request):
+        return render(request, 'login.html')
+
+class LogoutView(View):
+    """ 用户退出 """
+    def get(self, requset):
+        """" 实现用户退出登录 """
+        # 清除状态保持信息
+        logout(requset)
+        # 删除cookie中的用户名
+        response =  redirect(reverse('contents:index'))
+        response.delete_cookie('username')
+        # 响应结果
+        return response
+
+
+class  UserInfoView(LoginRequiredMixin, View):
+    """ 用户中心 """
+    def get(self, requset):
+        """ 提供用户中心页面 """
+        # if requset.user.is_authenticated:
+        #     return render(requset, 'user_center_info.html')
+        # else:
+        #     return redirect(reverse('users:login'))
+        return render(requset, 'user_center_info.html')
