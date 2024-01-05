@@ -2,16 +2,19 @@ from django.shortcuts import render, redirect
 from django.views import View
 from django.http import HttpResponse, HttpRequest
 from django import http
-import re
+import re, json, logging
 from users.models import User
 from django.db import DatabaseError
 from django.urls import reverse
 from django.contrib.auth import login, authenticate, logout
 from meiduo_supermaket.utils.response_code import RETCODE
 from django.contrib.auth.mixins import LoginRequiredMixin
+from meiduo_supermaket.utils.views import LoginRequiredJSONMixin
 # Create your views here.
 
 
+# 创建日志输出
+logger = logging.getLogger('django')
 class RegisterView(View):
     """用户注册"""
 
@@ -136,4 +139,36 @@ class  UserInfoView(LoginRequiredMixin, View):
         #     return render(requset, 'user_center_info.html')
         # else:
         #     return redirect(reverse('users:login'))
-        return render(requset, 'user_center_info.html')
+        # 如果LoginRequireMixin 判断出用户已经登录 ， 那么request.user 就是登录的用户
+        context = {
+            'username': requset.user.username,
+            'mobile': requset.user.mobile,
+            'email': requset.user.email,
+            'email_active': requset.user.email_active,
+        }
+
+        return render(requset, 'user_center_info.html', context)
+
+
+    # 添加邮箱
+class EmailView(LoginRequiredJSONMixin, View):
+    def put(self, request):
+        # 接受参数
+        json_str = request.body.decode()
+        json_dict = json.loads(json_str)
+        email = json_dict.get('email')
+        # 校验参数
+        if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+            return http.HttpResponseForbidden('参数email有误')
+        # 将用户写入的邮箱保存到用户数据库当中的email字段中
+        try:
+            request.user.email = email
+            request.user.save()
+        except Exception as e:
+            logger.error(e)
+            return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg':'添加邮箱失败'})
+        # 发送邮箱验证
+
+        # 响应结果
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg':'OK'})
+
